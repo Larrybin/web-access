@@ -141,7 +141,7 @@ function searchHistory(profileDir, profileName, keywords, since, limit, sort) {
       return { profile: profileName, title, url, visit, visit_count: parseInt(visit_count, 10) };
     });
   } catch (e) {
-    if (e.code === 'ENOENT') die('未找到 sqlite3 命令。macOS/Linux 通常自带；Windows 需安装。');
+    if (e.code === 'ENOENT') die('未找到 sqlite3 命令。macOS/Linux 通常自带；Windows 可用 `winget install sqlite.sqlite` 或从 https://sqlite.org/download.html 下载后加入 PATH。');
     return [];
   } finally {
     try { fs.unlinkSync(tmp); } catch {}

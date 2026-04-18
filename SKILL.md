@@ -70,7 +70,7 @@ node "${CLAUDE_SKILL_DIR}/scripts/check-deps.mjs"
 
 ### 补充：本地 Chrome 资源
 
-用户提到想找之前访问过但不记得地址的页面，或者某个组织内部系统（"我们的 XX 平台"等公网搜不到的目标）时，可检索本地 Chrome 书签/历史：
+用户指向**本人访问过的页面**（"我之前看的那个讲 X 的文章"、"上次打开过的 XX 面板"）或**组织内部系统**（"我们的 XX 平台"、"公司那个 YY 系统"等公网搜不到的目标）时，检索本地 Chrome 书签/历史：
 
 ```bash
 node "${CLAUDE_SKILL_DIR}/scripts/find-url.mjs" [关键词...] [--only bookmarks|history] [--limit N] [--since 1d|7h|YYYY-MM-DD] [--sort recent|visits]
