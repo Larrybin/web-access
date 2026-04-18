@@ -1,0 +1,16 @@
+{
+  "links": [
+    {
+      "text": "Register",
+      "href": "https://community.cbr.com/register/"
+    },
+    {
+      "text": "Post thread",
+      "href": "https://community.cbr.com/post-thread"
+    },
+    {
+      "text": "Account details",
+      "href": "https://community.cbr.com/account/details"
+    }
+  ]
+}

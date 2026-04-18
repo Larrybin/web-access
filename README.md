@@ -98,8 +98,15 @@ claude plugin install web-access@web-access --scope user
 **方式四：手动**
 
 ```bash
-git clone https://github.com/eze-is/web-access ~/.claude/skills/web-access
+git clone https://github.com/eze-is/web-access /path/to/web-access
+# 例如本地开发 checkout：
+# git clone https://github.com/eze-is/web-access /Users/bin/Desktop/project/web-access
 ```
+
+说明：
+
+- Agent 运行时会通过 `CLAUDE_SKILL_DIR` 定位当前 skill 目录，因此不要求固定安装到 `~/.claude/skills/web-access`
+- 如果你使用 Claude 的技能目录约定，再把仓库放到对应 skills 目录即可；如果你是本地开发或自定义加载，保持当前 checkout 路径也没问题
 
 ## 前置配置（CDP 模式）
 
@@ -113,7 +120,8 @@ CDP 模式需要 **Node.js 22+** 和 Chrome 开启远程调试：
 ```bash
 node "${CLAUDE_SKILL_DIR}/scripts/check-deps.mjs"
 # $CLAUDE_SKILL_DIR 是 skill 加载时自动设置的环境变量
-# 手动运行请替换为实际路径，如 ~/.claude/skills/web-access
+# 手动运行请替换为实际路径，例如：
+# node "/Users/bin/Desktop/project/web-access/scripts/check-deps.mjs"
 ```
 
 ## CDP Proxy API
@@ -123,6 +131,8 @@ Proxy 通过 WebSocket 直连 Chrome（兼容 `chrome://inspect` 方式，无需
 ```bash
 # 启动（Agent 会自动管理 Proxy 生命周期，无需手动启动）
 node "${CLAUDE_SKILL_DIR}/scripts/cdp-proxy.mjs" &
+# 手动运行请替换为实际路径，例如：
+# node "/Users/bin/Desktop/project/web-access/scripts/cdp-proxy.mjs" &
 
 # 页面操作
 curl -s "http://localhost:3456/new?url=https://example.com"     # 新建 tab
@@ -149,6 +159,80 @@ curl -s "http://localhost:3456/close?target=ID"                             # �
 - "去小红书搜索 xxx 的账号"
 - "帮我在创作者平台发一篇图文"
 - "同时调研这 5 个产品的官网，给我对比摘要"
+
+## 外链执行器（V1）
+
+仓库内提供了一个最小 CLI，用于把单条攻略页编译成 runbook，并在目标站推进到下一个检查点：
+
+```bash
+# 启动一次新任务
+node "./scripts/backlink-executor.mjs" start \
+  --guide-url "https://pdfreprinting.net/wailian/2026-03/22811425142228521/" \
+  --target-link "https://www.dfilters.com/" \
+  --content-file "/path/to/content-inputs.json" \
+  --choose-path "profile_link"
+
+# 从已有 runbook 恢复
+node "./scripts/backlink-executor.mjs" resume \
+  --runbook "$HOME/.gstack/projects/eze-is-web-access/runbooks/<runbook-id>.json" \
+  --result-state "awaiting_review"
+```
+
+`content-inputs.json` 最小格式：
+
+```json
+{
+  "site_name": "DFilters",
+  "site_summary": "A filter discovery site",
+  "anchor_text": "dfilters"
+}
+```
+
+生成型 runbook 默认保存在：
+
+```bash
+~/.gstack/projects/eze-is-web-access/runbooks/
+```
+
+可选参数：
+
+- `--choose-path`：在 `choose_path` 检查点直接指定路径，当前支持 `profile_link` / `thread_post`
+- `--result-state`：在 `pre_submit_check` 检查点直接写入结果，当前支持 `public` / `awaiting_review` / `blocked`
+
+如果在交互式终端中运行，且未提供上述参数，CLI 会在检查点直接提示你选择；非交互环境下则保持暂停并落盘，等待后续 `resume`。
+
+当前版本只做：
+- 单攻略、单站点、单次执行
+- `choose_path` / `pre_submit_check` 两个检查点落盘
+- 轻量恢复，不从头重跑
+- 成功完成后默认关闭自己创建的主 tab
+
+`profile_link` 当前已收敛为 3 个内部能力边界：
+- `create_or_update`：进入资料编辑路径并写入目标链接/简介
+- `verify_public`：在公开资料页回读真实外链，确认链接确实可见
+- `idempotent_short_circuit`：如果公开页已经存在目标链接，则直接进入检查点，不再重复编辑
+
+当前已验证样本链路：
+- `community.cbr.com`：`profile_link` / `thread_post`
+- `myminifactory.com`：`profile_link`
+- `wakelet.com`：`profile_link`
+- `daily.dev`：`profile_link`
+
+当前已知限制：
+- `daily.dev` 的 `settings/profile` 仍可能返回只有标题、没有可见 DOM 的空壳页；当前执行器通过“复用已登录 tab + 已有公开链接短路”规避，但对首次冷启动编辑仍不稳定。
+
+当前版本不做：
+- Chrome 插件壳
+- 模型 API 接入
+- 多站点调度框架
+
+## 测试
+
+使用 Node 原生测试：
+
+```bash
+node --test test/runbook.test.mjs test/executor.test.mjs
+```
 
 ## 设计哲学
 
