@@ -252,7 +252,8 @@ node "./scripts/backlink-executor.mjs" resume \
 
 - 一行只服务一个网站
 - `browser_env` 当前统一使用 `hubstudio`
-- `mail_provider` 当前统一使用 `outlook`
+- `mail_provider` 当前支持 `gmail` / `outlook`
+- `googlemail` 会归一化为 `gmail`，`hotmail` / `live` 会归一化为 `outlook`
 - `服务网站` 是该邮箱当前负责推广的网站主域名
 - `待推URL` 是该网站当前要投放的目标链接
 
@@ -282,6 +283,12 @@ node "./scripts/backlink-executor.mjs" resume \
 - `skip`：当前决定跳过
 
 当前公开 API 没有稳定的“单元格备注”写入口，因此细节说明先统一放在普通 `备注` 列中，而不是依赖右键菜单里的悬浮备注。
+
+`mail_provider` 的实现约束：
+
+- 适配器注册时必须提供 `openInbox` 和 `sendMail`
+- `createMailAccountDescriptor` 会把 `provider_kind`、邮箱地址和登录邮箱统一转成小写并裁剪空白
+- 账号描述中的字段名采用下划线风格：`provider_kind`、`login_email`、`display_name`
 
 ## 测试
 
